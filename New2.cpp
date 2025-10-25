@@ -2,185 +2,69 @@
 #include <GL/glut.h>
 #include <math.h>
 
-void bresenhamsLine(int x1, int y1, int x2, int y2) {
-    if (x1 > x2) {
-        int tempX = x1;
-        int tempY = y1;
-        x1 = x2;
-        y1 = y2;
-        x2 = tempX;
-        y2 = tempY;
-    }
+// Function to draw symmetric points
+void drawCirclePoints(int xc, int yc, int x, int y) {
+    glBegin(GL_POINTS);
+    glVertex2f(xc + x, yc + y);
+    glVertex2f(xc - x, yc + y);
+    glVertex2f(xc + x, yc - y);
+    glVertex2f(xc - x, yc - y);
+    glVertex2f(xc + y, yc + x);
+    glVertex2f(xc - y, yc + x);
+    glVertex2f(xc + y, yc - x);
+    glVertex2f(xc - y, yc - x);
+    glEnd();
+}
 
-    float m = (x2 - x1) == 0 ? 999 : (float)(y2 - y1) / (float)(x2 - x1);
-    int pk, x, y;
-
-    if (m >= 0 && m <= 1) {
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-        pk = (2 * dy) - dx;
-        x = x1;
-        y = y1;
-        glBegin(GL_POINTS);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        for (int i = 0; i < dx; i++) {
-            glVertex2f(x, y);
-            if (pk < 0)
-                pk = pk + 2 * dy;
-            else {
-                pk = pk + 2 * dy - 2 * dx;
-                y = y + 1;
-            }
-            x = x + 1;
+// Bresenham's (Midpoint) Circle Algorithm
+void bresenhamCircle(int xc, int yc, int r) {
+    int x = 0;
+    int y = r;
+    int d = 3 - (2 * r);
+    glColor3f(1.0f, 0.0f, 0.0f); // Red color for border
+    while (x <= y) {
+        drawCirclePoints(xc, yc, x, y);
+        if (d < 0)
+            d = d + (4 * x) + 6;
+        else {
+            d = d + 4 * (x - y) + 10;
+            y--;
         }
-        glEnd();
-    }
-
-    else if (m > 1) {
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-        pk = (2 * dx) - dy;
-        x = x1;
-        y = y1;
-        glBegin(GL_POINTS);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        for (int i = 0; i < dy; i++) {
-            glVertex2f(x, y);
-            if (pk < 0)
-                pk = pk + 2 * dx;
-            else {
-                pk = pk + 2 * dx - 2 * dy;
-                x = x + 1;
-            }
-            y = y + 1;
-        }
-        glEnd();
-    }
-
-    else if (m < 0 && m >= -1) {
-        int dx = x2 - x1;
-        int dy = y1 - y2;
-        pk = (2 * dy) - dx;
-        x = x1;
-        y = y1;
-        glBegin(GL_POINTS);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        for (int i = 0; i < dx; i++) {
-            glVertex2f(x, y);
-            if (pk < 0)
-                pk = pk + 2 * dy;
-            else {
-                pk = pk + 2 * dy - 2 * dx;
-                y = y - 1;
-            }
-            x = x + 1;
-        }
-        glEnd();
-    }
-
-    else if (m < -1) {
-        int dx = x2 - x1;
-        int dy = y1 - y2;
-        pk = (2 * dx) - dy;
-        x = x1;
-        y = y1;
-        glBegin(GL_POINTS);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        for (int i = 0; i < dy; i++) {
-            glVertex2f(x, y);
-            if (pk < 0)
-                pk = pk + 2 * dx;
-            else {
-                pk = pk + 2 * dx - 2 * dy;
-                x = x + 1;
-            }
-            y = y - 1;
-        }
-        glEnd();
+        x++;
     }
 }
 
+// Display function
 void display() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-500.0, 500.0, -500.0, 500.0, -500.0, 500.0);
-    glMatrixMode(GL_MODELVIEW);
+    glOrtho(-500, 500, -500, 500, -1, 1);
 
-    // --- Fill Star using 8 GL_POLYGON triangles ---
-    glColor3f(0.0f, 1.0f, 0.0f); // Green color for fill
-
+    // Fill the circle using GL_POLYGON
+    glColor3f(0.0f, 1.0f, 4.0f); // Green fill
     glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(0, 300);
-    glVertex2f(100, 100);
+    int xc = 0, yc = 0, r = 200;
+    for (int angle = 0; angle <= 360; angle++) {
+        float rad = angle * 3.1416 / 180;
+        glVertex2f(xc + r * cos(rad), yc + r * sin(rad));
+    }
     glEnd();
 
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(100, 100);
-    glVertex2f(300, 0);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(300, 0);
-    glVertex2f(100, -100);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(100, -100);
-    glVertex2f(0, -300);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(0, -300);
-    glVertex2f(-100, -100);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(-100, -100);
-    glVertex2f(-300, 0);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(-300, 0);
-    glVertex2f(-100, 100);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glVertex2f(0, 0);
-    glVertex2f(-100, 100);
-    glVertex2f(0, 300);
-    glEnd();
-
-    // --- Draw Bresenham's Outline ---
-    bresenhamsLine(0, 300, 100, 100);
-    bresenhamsLine(100, 100, 300, 0);
-    bresenhamsLine(300, 0, 100, -100);
-    bresenhamsLine(100, -100, 0, -300);
-    bresenhamsLine(0, -300, -100, -100);
-    bresenhamsLine(-100, -100, -300, 0);
-    bresenhamsLine(-300, 0, -100, 100);
-    bresenhamsLine(-100, 100, 0, 300);
-
+    // Circle border using Bresenham's algorithm
+    bresenhamCircle(0, 0, 200);
     glFlush();
 }
 
+// Main
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
-    glutInitWindowPosition(50, 50);
-    glutCreateWindow("Star - Bresenham Outline");
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Circle - Bresenham's Algorithm");
     glutDisplayFunc(display);
     glutMainLoop();
-
     return 0;
 }
